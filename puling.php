@@ -33,14 +33,6 @@ function exMapinnerAddAdminMenu()
 }
 
 function exMapinnerAdminHtml(){
-    $location=$_POST["location"];
-    if($location!=null){
-        update_option($exMapinnerLocationFieldName,$location);
-        update_option($exMapinnerApiKeyFieldName,$apiKey);
-        ?>
-        <div>Güncellendi</div>
-        <?php
-    }
     //AIzaSyAzzjRCTj5adWXm0hXZwLagi8KVkdPDWeA
     ?>
     <div>
@@ -51,7 +43,25 @@ function exMapinnerAdminHtml(){
             if($apiKey==NULL && $apiKey==""){
                 ?>
                     <script>
-                        var controller
+                        var controller=function(){
+                            this.save=function(){
+                                var element=document.getElementById("googleKey");
+                                if(element!=null){
+                                    var httpRequest = new XMLHttpRequest();
+                                    httpRequest.open("GET", "/wp-content/plugins/Exline.MaPinner/api/googleapisave.php?apikey="+element.value, false);
+                                    //httpRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                                    httpRequest.send("apikey="+element.value);
+                                    //httpRequest.send("apikey="+element.value);
+                                    var response=httpRequest.responseText;
+                                    if(response.isOk){
+                                        location.reload();
+                                    }else{
+                                        alert(response.message);
+                                    }
+                                }
+                            }
+                        }
+                        controller=new controller();
                     </script>
                     <div>
                         <span>harita pinlemesini kullanabilmeniz için google api keyinizi girmelisiniz.</span>
@@ -61,7 +71,7 @@ function exMapinnerAdminHtml(){
                         <input id="googleKey" placeholder="google api keyi giriniz" type="textbox" value="<?php ?>"/>
                     </div>
                     <div>
-                        <input type="button" value="Kaydet" />
+                        <input type="button" value="Kaydet" onclick="controller.save()" />
                     </div>
                 <?php
             }else{
@@ -70,7 +80,8 @@ function exMapinnerAdminHtml(){
                     <script async defer src="https://maps.googleapis.com/maps/api/js?key=<?php apiKey ?>&callback=controller.mapInit">
                     </script>
                     <script>
-                        let controller=function(){
+                        var controller=function(){
+                            var location=null;
                             function getPostModel(){
                                 return {
                                     lat:documment.getElementById("")
@@ -90,13 +101,27 @@ function exMapinnerAdminHtml(){
                                 });
 
                                 map.addListener('click', function(e) {
-                                placeMarkerAndPanTo(e.latLng, map);
+                                    location=e.latLng;
+                                    console.log(location);
+                                    placeMarkerAndPanTo(e.latLng, map);
                                 });
                             }
                             this.save=function(){
-
+                                var httpRequest = new XMLHttpRequest();
+                                httpRequest.open("GET", "/wp-content/plugins/Exline.MaPinner/api/locationsave.php?location=location=["+lat+","+lng+"]", false);
+                                httpRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                                httpRequest.send();
+                                //httpRequest.send("location=["+lat+","+lng+"]");
+                                var response=httpRequest.responseText;
+                                if(response.isOk){
+                                    location.reload();
+                                }else{
+                                    alert(response.message);
+                                }
                             }
                         }
+                        controller=new controller();
+                        
                     </script>
                     <div>
                         <span>Harita / Adres Bilgileri</span>
@@ -119,7 +144,7 @@ function exMapinnerAdminHtml(){
                         </div>
                     </div>
                     <div>
-                        <input type="button" value="Güncelle" />
+                        <input type="button" value="Güncelle" onclick="controller.save()" />
                     </div>
                 <?php
             }
