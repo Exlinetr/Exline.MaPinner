@@ -67,17 +67,6 @@ function exMapinnerAdminHtml(){
                     <script async defer src="https://maps.googleapis.com/maps/api/js?key=<?php apiKey ?>&callback=initMap">
                     </script>
                     <script>
-                        function initMap() {
-                           
-                        }
-
-                        function makerPin(latLng, map) {
-                            var marker = new google.maps.Marker({
-                            position: latLng,
-                            map: map
-                            });
-                            map.panTo(latLng);
-                        }
                         let controller=function(){
                             function getPostModel(){
                                 return {
