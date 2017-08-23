@@ -50,6 +50,9 @@ function exMapinnerAdminHtml(){
             $apiKey=get_option($exMapinnerApiKeyFieldName);
             if($apiKey==NULL && $apiKey==""){
                 ?>
+                    <script>
+                        var controller
+                    </script>
                     <div>
                         <span>harita pinlemesini kullanabilmeniz için google api keyinizi girmelisiniz.</span>
                     </div>
@@ -64,7 +67,7 @@ function exMapinnerAdminHtml(){
             }else{
                 ?>
                     
-                    <script async defer src="https://maps.googleapis.com/maps/api/js?key=<?php apiKey ?>&callback=initMap">
+                    <script async defer src="https://maps.googleapis.com/maps/api/js?key=<?php apiKey ?>&callback=controller.mapInit">
                     </script>
                     <script>
                         let controller=function(){
@@ -97,6 +100,20 @@ function exMapinnerAdminHtml(){
                     </script>
                     <div>
                         <span>Harita / Adres Bilgileri</span>
+                        <div>
+                            <span>Yaklaşım Oranı</span>
+                            <div>
+                                <select id="map_zoom_option">
+                                    <?php
+                                        for($i=1;$i<4;$i++){
+                                            ?>
+                                                <option value="<?php $i ?>"><?php $i ?></option>
+                                            <?php
+                                        }
+                                    ?>
+                                </select>
+                            </div>
+                        </div>
                         <div style="width=100%;height=500px">
                             <div id="map"></div>
                         </div>
