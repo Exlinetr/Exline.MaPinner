@@ -1,7 +1,7 @@
 <?php 
 
     header('Content-Type: application/json');
-    echo json_encode(save($_GET["apikey"])); 
+    echo json_encode(save($_POST["apikey"])); 
 
     function save($apiKey){
         $result=array();

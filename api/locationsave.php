@@ -1,7 +1,7 @@
 <?php
 
     header('Content-Type: application/json');
-    echo json_encode(save($_GET["location"])); 
+    echo json_encode(save($_POST["location"])); 
 
     function save($location){
         $result=array();
