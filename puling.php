@@ -47,11 +47,11 @@ function googleApiKeySave(){
         $result["isOk"]=false;
         $result["message"]="You must enter google api key";
     }else{
-        $oldApiKey=get_option($exMapinnerApiKeyFieldName);
-        if($oldApiKey==null ||$oldApiKey==""){
-            update_option($exMapinnerApiKeyFieldName,$apiKey);
+        $oldApiKey=get_option("exMapinnerApiKey");
+        if($oldApiKey==null){
+            update_option("exMapinnerApiKey",$apiKey);
         }else{
-            add_option($exMapinnerApiKeyFieldName,$apiKey);
+            add_option("exMapinnerApiKey",$apiKey);
         }
         $result["isOk"]=true;
         $result["message"]="success";
@@ -63,12 +63,18 @@ function googleApiKeySave(){
 add_action("wp_ajax_locationSave","locationSave");
 function locationSave(){
     header('Content-Type: application/json');
-    $location=$_POST["location"];
+    $location="[".$_POST["lat"].",".$_POST["lng"]."]";
+    $apiKey=$_POST["apiKey"];
     $result=array();
     if($location==null ||$location==""){
         $result["isOk"]=false;
         $result["message"]="You must select a location from the map";
-    }else{
+    }else if($apiKey==null ||$apiKey==""){
+        $result["isOk"]=false;
+        $result["message"]="You must enter google api key";
+    }
+    else{
+        update_option("exMapinnerApiKey",$apiKey)
         update_option("exMapinnerLocation",$location);
         $result["isOk"]=true;
         $result["message"]="success";
@@ -83,16 +89,43 @@ function exMapinnerAdminHtml(){
     $location=getLocation();
     //AIzaSyAzzjRCTj5adWXm0hXZwLagi8KVkdPDWeA
     ?>
-    <div>
-        <h2>ex-mapinner Yönetim Sayfası <?php echo "location".get_option("exMapinnerLocation"); ?></h2>
-        <div>
-        <script>
-            var postUrl="<?php echo admin_url('admin-ajax.php'); ?>";
-        </script>
+    <style>
+        .context{
+            background: #fff;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+            width: calc(100% - 40px);    
+            display: inline-block;
+        }
+        .context .field{
+            min-width: calc(100%);    
+            display: inline-block;
+            padding: 5px 0;
+        }
+        .context .content{    
+            display: inline-block;
+            width:100%;    
+            padding: 5px 0;
+        }
+        #map{
+            height:250px;
+            width:100%;
+            display: inline-block;
+        }
+    </style>
+    <div class="context">
+        <h2>Ex-MaPinner Managment</h2>
+        <hr>
+        <div class="content">
+            <script>
+                var postUrl="<?php echo admin_url('admin-ajax.php'); ?>";
+            </script>
                     <script>
                         var controller=function(){
                             this.save=function(){
-                                var element=document.getElementById("apikey");
+                                var element=document.getElementById("apiKey");
                                 if(element!=null){
                                     jQuery.post(postUrl, 
                                     {
@@ -121,8 +154,8 @@ function exMapinnerAdminHtml(){
                     <?php 
                     }?>
                     <div>
-                        <span>Google ApiKey:</span>
-                        <input id="apiKey" placeholder="google api keyi giriniz" type="textbox" value="<?php echo $apiKey; ?>"/>
+                        <span class="field">Google ApiKey:</span>
+                        <input id="apiKey" class="field" placeholder="google api keyi giriniz" type="textbox" value="<?php echo $apiKey; ?>"/>
                     </div>
                     
                     <?php 
@@ -133,15 +166,15 @@ function exMapinnerAdminHtml(){
                     </div>
                     <?php 
                     }?>
+        </div>
                 <?php
             if($apiKey!=NULL && $apiKey!=""){
                 ?>
-                    
                     <script async defer src="https://maps.googleapis.com/maps/api/js?key=<?php echo $apiKey; ?>&callback=controller.mapInit">
                     </script>
                     <script>
                         var controller=function(){
-                            var pin=null;
+                            var markers=[];
                             function getPostModel(){
                                 return {
                                     action:"locationSave",
@@ -152,27 +185,32 @@ function exMapinnerAdminHtml(){
                                 };
                             }
                             function clearMapPin(map){
-                                if(pin!=null){
-                                    pin=null;
+                                if(markers!=null){
+                                    markers=[];
                                 }
+                                for(i=0;i<markers.length;i++){
+                                    markers[i].setMap(null);
+                                }
+                                markers=[];
                             }
                             function setPin(position,map){
                                 clearMapPin();
-                                pin=new google.maps.Marker({
-                                    position:position,
-                                    map:map
-                                }).setMap(map);
+                                var pin= new google.maps.Marker({
+                                position: position,
+                                map: map
+                                });
+                                markers.push(pin);
                             }
                             this.mapInit=function(){
                                 var map = new google.maps.Map(document.getElementById('map'), {
-                                    zoom: 4,
+                                    zoom: 10,
                                     center: {lat: <?php echo $location[0] ?>, lng:  <?php echo $location[1] ?> }
                                 });
-                                setPin();
+                                setPin(new google.maps.LatLng(<?php echo $location[0] ?>,<?php echo $location[1] ?>),map);
                                 map.addListener('click', function(e) {
                                     location=e.latLng;
-                                    console.log(location);
                                     setPin(e.latLng, map);
+                                    return false;
                                 });
                             }
                             this.save=function(){
@@ -189,12 +227,12 @@ function exMapinnerAdminHtml(){
                         }
                         controller=new controller();
                     </script>
-                    <div>
-                        <span>Harita / Adres Bilgileri</span>
-                        <div>
-                            <span>Yaklaşım Oranı</span>
+                    <div class="content">
+                        <h4>Adres ve Gösterim Bilgileri</h4>
+                        <div class="content">
+                            <span class="field">Yaklaşım Oranı:</span>
                             <div>
-                                <select id="map_zoom_option">
+                                <select class="field" id="map_zoom_option">
                                     <?php
                                         for($i=1;$i<5;$i++){
                                             ?>
@@ -205,17 +243,16 @@ function exMapinnerAdminHtml(){
                                 </select>
                             </div>
                         </div>
-                        <div>
-                            <div style="height: 259px;width: 500px;" id="map"></div>
+                        <div class="content">
+                            <div id="map"></div>
                         </div>
                     </div>
-                    <div>
-                        <input type="button" value="Güncelle" onclick="controller.save()" />
+                    <div class="content">
+                        <input style="float: right;" type="button" value="Güncelle" onclick="controller.save()" />
                     </div>
                 <?php
             }
         ?>
-        </div>
     </div>
     <?php
 }
