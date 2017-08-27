@@ -8,28 +8,22 @@ Author: exlinetr
 Author URI: www.exlinetr.com
 License: MIT
 */
-
 if (preg_match('#' . basename(__FILE__) . '#', $_SERVER['PHP_SELF']))
 {
     die('You are not allowed to call this page directly.');
 }
 register_activation_hook(__FILE__, 'exMapinnerSetLocation');
 function exMapinnerSetLocation( ) {
-    add_option("exMapinnerLocation", '[40.9811277,29.0280334,13]');
+    add_option("exMapinnerLocation", '[{"type":2,"lat":40.855541,"lng":29.295696}]');
 }
 
 function getLocation(){
     $location=get_option("exMapinnerLocation");
     if($location==null || $location==""){
-        $location="[40.9811277,29.0280334,13]";
+        $location='[{"type":2,"lat":40.855541,"lng":29.295696}]';
     }
     return json_decode($location);
 }
-
-// register_deactivation_hook(__FILE__, 'exMapinnerRemoveLocation');
-// function exMapinnerRemoveLocation( ) {
-//     delete_option("exMapinnerLocation");
-// }
 
 add_action('admin_menu', 'exMapinnerAddAdminMenu');
 function exMapinnerAddAdminMenu()
@@ -63,7 +57,7 @@ function googleApiKeySave(){
 add_action("wp_ajax_locationSave","locationSave");
 function locationSave(){
     header('Content-Type: application/json');
-    $location="[".$_POST["lat"].",".$_POST["lng"]."]";
+    $location=json_encode($_POST["pins"]);
     $apiKey=$_POST["apiKey"];
     $result=array();
     if($location==null ||$location==""){
@@ -74,7 +68,7 @@ function locationSave(){
         $result["message"]="You must enter google api key";
     }
     else{
-        update_option("exMapinnerApiKey",$apiKey)
+        update_option("exMapinnerApiKey",$apiKey);
         update_option("exMapinnerLocation",$location);
         $result["isOk"]=true;
         $result["message"]="success";
@@ -87,34 +81,8 @@ function locationSave(){
 function exMapinnerAdminHtml(){
     $apiKey=get_option("exMapinnerApiKey");
     $location=getLocation();
-    //AIzaSyAzzjRCTj5adWXm0hXZwLagi8KVkdPDWeA
     ?>
-    <style>
-        .context{
-            background: #fff;
-            padding: 20px;
-            margin-top: 20px;
-            border: 1px solid #ccc;
-            box-sizing: border-box;
-            width: calc(100% - 40px);    
-            display: inline-block;
-        }
-        .context .field{
-            min-width: calc(100%);    
-            display: inline-block;
-            padding: 5px 0;
-        }
-        .context .content{    
-            display: inline-block;
-            width:100%;    
-            padding: 5px 0;
-        }
-        #map{
-            height:250px;
-            width:100%;
-            display: inline-block;
-        }
-    </style>
+    <link href="/wp-content/plugins/Exline.MaPinner/contents/css/admin.style.css" rel="stylesheet" type="text/css">
     <div class="context">
         <h2>Ex-MaPinner Managment</h2>
         <hr>
@@ -122,28 +90,10 @@ function exMapinnerAdminHtml(){
             <script>
                 var postUrl="<?php echo admin_url('admin-ajax.php'); ?>";
             </script>
+                    <script src="/wp-content/plugins/Exline.MaPinner/contents/js/admin.js"></script>
                     <script>
-                        var controller=function(){
-                            this.save=function(){
-                                var element=document.getElementById("apiKey");
-                                if(element!=null){
-                                    jQuery.post(postUrl, 
-                                    {
-                                        action: 'googleApiKeySave',
-                                        apiKey:element.value
-                                    }, 
-                                    function(response) {
-                                        console.log(response);
-                                        if(response.isOk){
-                                            location.reload();
-                                        }else{
-                                            alert(response.message);
-                                        }
-                                    });
-                                }
-                            }
-                        }
-                        controller=new controller();
+                        var controller=new controller();
+                        controller.setPins(<?php echo json_encode($location) ?>);
                     </script>
                     <?php 
                         if($apiKey==NULL || $apiKey==""){
@@ -162,7 +112,7 @@ function exMapinnerAdminHtml(){
                         if($apiKey==NULL || $apiKey==""){
                     ?>
                     <div>
-                        <input type="button" value="Kaydet" onclick="controller.save()" />
+                        <input type="button" value="Kaydet" onclick="controller.saveApiKey()" />
                     </div>
                     <?php 
                     }?>
@@ -170,66 +120,13 @@ function exMapinnerAdminHtml(){
                 <?php
             if($apiKey!=NULL && $apiKey!=""){
                 ?>
-                    <script async defer src="https://maps.googleapis.com/maps/api/js?key=<?php echo $apiKey; ?>&callback=controller.mapInit">
-                    </script>
+                    <script async defer src="https://maps.googleapis.com/maps/api/js?key=<?php echo $apiKey; ?>&libraries=places&callback=controller.mapInit"></script>
                     <script>
-                        var controller=function(){
-                            var markers=[];
-                            function getPostModel(){
-                                return {
-                                    action:"locationSave",
-                                    apiKey:document.getElementById("apiKey").value,
-                                    zoom:document.getElementById("map_zoom_option").value,
-                                    lat:location.lat,
-                                    lng:location.lng
-                                };
-                            }
-                            function clearMapPin(map){
-                                if(markers!=null){
-                                    markers=[];
-                                }
-                                for(i=0;i<markers.length;i++){
-                                    markers[i].setMap(null);
-                                }
-                                markers=[];
-                            }
-                            function setPin(position,map){
-                                clearMapPin();
-                                var pin= new google.maps.Marker({
-                                position: position,
-                                map: map
-                                });
-                                markers.push(pin);
-                            }
-                            this.mapInit=function(){
-                                var map = new google.maps.Map(document.getElementById('map'), {
-                                    zoom: 10,
-                                    center: {lat: <?php echo $location[0] ?>, lng:  <?php echo $location[1] ?> }
-                                });
-                                setPin(new google.maps.LatLng(<?php echo $location[0] ?>,<?php echo $location[1] ?>),map);
-                                map.addListener('click', function(e) {
-                                    location=e.latLng;
-                                    setPin(e.latLng, map);
-                                    return false;
-                                });
-                            }
-                            this.save=function(){
-                                jQuery.post(postUrl,getPostModel(),
-                                function(response) {
-                                    console.log(response);
-                                    if(response.isOk){
-                                        location.reload();
-                                    }else{
-                                        alert(response.message);
-                                    }
-                                });
-                            }
-                        }
-                        controller=new controller();
+                        controller.setPins(<?php echo json_encode($location) ?>);
                     </script>
                     <div class="content">
                         <h4>Adres ve Gösterim Bilgileri</h4>
-                        <div class="content">
+                        <!-- <div class="content">
                             <span class="field">Yaklaşım Oranı:</span>
                             <div>
                                 <select class="field" id="map_zoom_option">
@@ -242,13 +139,63 @@ function exMapinnerAdminHtml(){
                                     ?>
                                 </select>
                             </div>
-                        </div>
-                        <div class="content">
+                        </div> -->
+                        <div style="position: relative;" class="content">
                             <div id="map"></div>
+                            <div class="mapTool" id="placeSearch">
+                                <img style="float: left;" src="\wp-content\plugins\Exline.MaPinner\contents\img\search-icon.png"/>
+                                <input id="placeSearchText" class="text" type="text" placeholder="Adres"/>
+                            </div>
+                            <div id="mapBluer" class="bluer" onclick="controller.closeGenereateWebSiteCode()"></div>
+                            <div class="mapTool" id="generateWebSiteCodePopup">
+                                <span class="close" onclick="controller.closeGenereateWebSiteCode()">X</span>
+                                <h1>Kod</h1>
+                                <hr>
+                                <span id="webSiteEmbedCodeText"></span>
+                            </div>
+                            <div class="mapTool" id="pinOptions">
+                                <span class="close" onclick="controller.closePinOptions()">X</span>
+                                <ul id="pinControls" >
+                                    <li onclick="controller.generateWebSiteCode()">
+                                        <span>Web Site Yerleştirme Kodunu Al</span>
+                                    </li>
+                                    <li onclick="location.reload()">
+                                        <span>Yapılan Tüm Değişikleri Geri Al</span>
+                                    </li>
+                                    <li onclick="controller.clearMapPin()">
+                                        <span>Tüm Pinleri Kaldır</span>
+                                    </li>
+                                    <li class="pinBtn" onclick="controller.pinProperties()">
+                                        <span>Pini Özelleştir</span>
+                                    </li>
+                                    <li class="pinBtn" onclick="controller.removePin()">
+                                        <span>Pini Kaldır</span>
+                                    </li>
+                                </ul>
+                                <ul id="pinProperties">
+                                <span class="close back" onclick="controller.back()"><</span>
+                                    <li>
+                                        <input id="pinLabel" onchange="controller.pinLabelChange(this)" type="text" class="text" placeholder="Başlık" />
+                                    </li>
+                                    <li>
+                                        <select id="pinType" onchange="controller.pinTypeChange(this)">
+                                            <option value="1">Çember (Circles)</option>
+                                            <option value="2">Pin</option>
+                                            <option value="NaN">Özelleştir</option>
+                                        </select>
+                                    </li>
+                                    <li class="circlesProperty">
+                                        <input id="pinRadius" onchange="controller.pinRadiusChange(this)" type="number" placeholder="radius" />
+                                    </li>
+                                    <li>
+                                        <input id="pinUrl" onchange="controller.pinUrlChange(this)" type="text" class="text" placeholder="Link" />
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                     <div class="content">
-                        <input style="float: right;" type="button" value="Güncelle" onclick="controller.save()" />
+                        <input style="float: right;" type="button" value="Güncelle" onclick="controller.save(this)" />
                     </div>
                 <?php
             }
