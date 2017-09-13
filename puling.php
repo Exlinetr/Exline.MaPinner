@@ -88,6 +88,10 @@ function getJsCode(){
     <script defer src="https://maps.googleapis.com/maps/api/js?key=<?php echo get_option("exMapinnerApiKey"); ?>&callback=controller.mapInit"></script> 
     <div id="map"></div>
     <?php
+<<<<<<< HEAD
+=======
+    wp_die();
+>>>>>>> 232f1b82833f1d30c5dfd6adf79bae0338977b00
 }
 
 
@@ -161,10 +165,12 @@ function exMapinnerAdminHtml(){
                             </div>
                             <div id="mapBluer" class="bluer" onclick="controller.closeGenereateWebSiteCode()"></div>
                             <div class="mapTool" id="generateWebSiteCodePopup">
-                                <span class="close" onclick="controller.closeGenereateWebSiteCode()">X</span>
-                                <h1>Kod</h1>
-                                <hr>
-                                <span id="webSiteEmbedCodeText"></span>
+                                <div>
+                                    <span class="close" onclick="controller.closeGenereateWebSiteCode()">X</span>
+                                    <h1>Kod</h1>
+                                    <hr>
+                                    <span id="webSiteEmbedCodeText"></span>
+                                </div>
                             </div>
                             <div class="mapTool" id="pinOptions">
                                 <span class="close" onclick="controller.closePinOptions()">X</span>
@@ -211,7 +217,7 @@ function exMapinnerAdminHtml(){
                         </div>
                     </div>
                     <div class="content">
-                        <input style="float: right;" type="button" value="Güncelle" onclick="controller.save(this)" />
+                        <input id="updateBtn" style="float: right;" type="button" value="Güncelle" onclick="controller.save(this)" />
                     </div>
                 <?php
             }

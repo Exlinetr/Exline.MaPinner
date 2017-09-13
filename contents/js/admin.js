@@ -199,16 +199,23 @@ var controller = function () {
         }
         pins = [];
     }
-    this.save = function (input) {
-        input.setAttribute("disabled","disabled");
-        input.value="Güncelleniyor...";
+    this.save = function (input,callBack) {
+        if(input!=null){
+            input.setAttribute("disabled","disabled");
+            input.value="Güncelleniyor...";
+        }
         jQuery.post(postUrl, getPostModel(),
             function (response) {
                 if (!response.isOk) {
                     alert(response.message);
                 }
-                input.removeAttribute("disabled");
-                input.value="Güncelle";
+                if(input!=null){
+                    input.removeAttribute("disabled");
+                    input.value="Güncelle";
+                }
+                if(callBack!=null){
+                    callBack();
+                }
             });
     }
     this.saveApiKey = function () {
@@ -303,11 +310,9 @@ var controller = function () {
     }
     this.generateWebSiteCode=function(isPhpCode){
         var popup=document.getElementById("mapBluer");
-        popup.style.display="block";
         var codePopup=document.getElementById("generateWebSiteCodePopup");
-        codePopup.style.display="block";
         if(isPhpCode===true){
-            var embedCodeText=document.getElementById("webSiteEmbedCodeText").innerText=
+            var embedCodeText=
             '<link href="/wp-content/plugins/Exline.MaPinner/contents/css/web.style.css" rel="stylesheet" type="text/css"> \n'+
             '<script src="/wp-content/plugins/Exline.MaPinner/contents/js/web.js"></script> \n'+  
             '<script> \n'+
@@ -315,6 +320,18 @@ var controller = function () {
             '</script> \n'+
             '<script defer src="https://maps.googleapis.com/maps/api/js?key=<?php echo get_option("exMapinnerApiKey"); ?>&libraries=places&callback=controller.mapInit"></script> \n'+
             '<div id="map"></div> \n';
+            document.getElementById("webSiteEmbedCodeText").innerText=embedCodeText;
+            codePopup.style.display="block";
+            popup.style.display="block";
+        }else{
+            this.save(null,function(){
+                jQuery.post(postUrl, {action:"getjscode"},
+                function (response) {
+                    document.getElementById("webSiteEmbedCodeText").innerText=response;
+                    codePopup.style.display="block";
+                    popup.style.display="block";
+                });
+            });
         }
     }
     this.closeGenereateWebSiteCode=function(){
