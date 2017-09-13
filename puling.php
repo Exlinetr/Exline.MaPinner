@@ -77,6 +77,19 @@ function locationSave(){
     wp_die();
 }
 
+add_action("wp_ajax_getjscode","getJsCode");
+function getJsCode(){
+    ?>
+    <link href="/wp-content/plugins/Exline.MaPinner/contents/css/web.style.css" rel="stylesheet" type="text/css"> 
+    <script src="/wp-content/plugins/Exline.MaPinner/contents/js/web.js"></script> 
+    <script> 
+    var controller=new exMapinnerController(document.getElementById("map"),<?php echo get_option("exMapinnerLocation") ?>); 
+    </script> 
+    <script defer src="https://maps.googleapis.com/maps/api/js?key=<?php echo get_option("exMapinnerApiKey"); ?>&callback=controller.mapInit"></script> 
+    <div id="map"></div>
+    <?php
+}
+
 
 function exMapinnerAdminHtml(){
     $apiKey=get_option("exMapinnerApiKey");
@@ -156,8 +169,11 @@ function exMapinnerAdminHtml(){
                             <div class="mapTool" id="pinOptions">
                                 <span class="close" onclick="controller.closePinOptions()">X</span>
                                 <ul id="pinControls" >
-                                    <li onclick="controller.generateWebSiteCode()">
-                                        <span>Web Site Yerleştirme Kodunu Al</span>
+                                    <li onclick="controller.generateWebSiteCode(true)">
+                                        <span>Web Site Yerleştirme Kodunu Al (PHP)</span>
+                                    </li>
+                                    <li onclick="controller.generateWebSiteCode(false)">
+                                        <span>Web Site Yerleştirme Kodunu Al (JS)</span>
                                     </li>
                                     <li onclick="location.reload()">
                                         <span>Yapılan Tüm Değişikleri Geri Al</span>

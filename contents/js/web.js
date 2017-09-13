@@ -1,7 +1,12 @@
 
-var exMapinnerController = function (mapContext,pins) {
+var exMapinnerController = function (mapContext,pins,mapOptions) {
     this.mapContext=mapContext;
-
+    this.mapOptions=mapOptions;
+    
+    var defaultMapOptions={
+        zoom:14,
+        draggable:true
+    };
     function createMarker(pin, map) {
         return new google.maps.Marker({
             position: new google.maps.LatLng(pin.lat, pin.lng),
@@ -70,13 +75,19 @@ var exMapinnerController = function (mapContext,pins) {
         if(this.mapContext==null){
             this.mapContext=document.getElementById("map");
         }
+        if(this.mapOptions==null){
+            this.mapOptions=defaultMapOptions;
+        }
         var root=pins[0];
-        var map = new google.maps.Map(this.mapContext, {
-            zoom: 12,
-            center: { lat: parseFloat(root.lat), lng: parseFloat(root.lng) },
+        this.mapOptions.center={ lat: parseFloat(root.lat), lng: parseFloat(root.lng) };
+        var map = new google.maps.Map(this.mapContext, this.mapOptions);
+        /*
+            {
+            zoom: .zoom,
+            center: ,
             disableDefaultUI: true
-        });
-        map.setOptions({draggable: false});
+        }
+        */
         setPins(pins,map);
     }
 }
