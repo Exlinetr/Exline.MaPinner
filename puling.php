@@ -88,10 +88,7 @@ function getJsCode(){
     <script defer src="https://maps.googleapis.com/maps/api/js?key=<?php echo get_option("exMapinnerApiKey"); ?>&callback=controller.mapInit"></script> 
     <div id="map"></div>
     <?php
-<<<<<<< HEAD
-=======
     wp_die();
->>>>>>> 232f1b82833f1d30c5dfd6adf79bae0338977b00
 }
 
 
@@ -109,7 +106,7 @@ function exMapinnerAdminHtml(){
             </script>
                     <script src="/wp-content/plugins/Exline.MaPinner/contents/js/admin.js"></script>
                     <script>
-                        var controller=new controller();
+                        var controller=new controller("<?php echo $apiKey?>");
                         controller.setPins(<?php echo json_encode($location) ?>);
                     </script>
                     <?php 
@@ -186,6 +183,9 @@ function exMapinnerAdminHtml(){
                                     </li>
                                     <li onclick="controller.clearMapPin()">
                                         <span>Tüm Pinleri Kaldır</span>
+                                    </li>
+                                    <li class="pinBtn" onclick="controller.generateWebSiteCodeBySelectedPin()">
+                                        <span>Pinin Site Yerleştirme Kodunu Al (JS)</span>
                                     </li>
                                     <li class="pinBtn" onclick="controller.pinProperties()">
                                         <span>Pini Özelleştir</span>

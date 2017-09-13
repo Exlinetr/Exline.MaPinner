@@ -1,9 +1,10 @@
 
-var controller = function () {
+var controller = function (api) {
     var markers = [];
     var selectedMarker = null;
     var currentMap = null;
     var memoryPins = [];
+    var apiKey=api;
 
     function getPostModel() {
         var pins = [];
@@ -333,6 +334,26 @@ var controller = function () {
                 });
             });
         }
+    }
+    this.generateWebSiteCodeBySelectedPin=function(){
+        if(selectedMarker==undefined){
+            alert("kodun yaratılabilmesi için pin seçmeniz gereklidir");
+            return;
+        }
+        var popup=document.getElementById("mapBluer");
+        var codePopup=document.getElementById("generateWebSiteCodePopup");
+        var pin=markerToPin(selectedMarker);
+        var embedCodeText=
+        '<link href="/wp-content/plugins/Exline.MaPinner/contents/css/web.style.css" rel="stylesheet" type="text/css"> \n'+
+        '<script src="/wp-content/plugins/Exline.MaPinner/contents/js/web.js"></script> \n'+  
+        '<script> \n'+
+        '    var controller=new exMapinnerController(document.getElementById("map"),'+JSON.stringify(pin)+'); \n'+
+        '</script> \n'+
+        '<script defer src="https://maps.googleapis.com/maps/api/js?key='+apiKey+'&libraries=places&callback=controller.mapInit"></script> \n'+
+        '<div id="map"></div> \n';
+        document.getElementById("webSiteEmbedCodeText").innerText=embedCodeText;
+        codePopup.style.display="block";
+        popup.style.display="block";
     }
     this.closeGenereateWebSiteCode=function(){
         var popup=document.getElementById("mapBluer");
